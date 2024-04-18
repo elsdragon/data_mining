@@ -1,6 +1,7 @@
 # data_mining y estadística
+# PROYECTO SOBRE APARTAMENTOS ARBNB EN MADRID
 Archivo: practica-LuciaDominguez.qmd (cuaderno Quarto, en RStudio con lenguaje R)
-Proyecto del módulo de Estadística y Data Mining.
+formato HTML: practica-LuciaDominguez.html
 
 Análisis de un data frame de Airbnb de los pisos de Madrid.
 Exploración de los datos

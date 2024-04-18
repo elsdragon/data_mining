@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.4.552">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>practica-luciadominguez</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+</style>
+
+
+<script src="Practica-LuciaDominguez_files/libs/clipboard/clipboard.min.js"></script>
+<script src="Practica-LuciaDominguez_files/libs/quarto-html/quarto.js"></script>
+<script src="Practica-LuciaDominguez_files/libs/quarto-html/popper.min.js"></script>
+<script src="Practica-LuciaDominguez_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="Practica-LuciaDominguez_files/libs/quarto-html/anchor.min.js"></script>
+<link href="Practica-LuciaDominguez_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="Practica-LuciaDominguez_files/libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="Practica-LuciaDominguez_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="Practica-LuciaDominguez_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="Practica-LuciaDominguez_files/libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+
+  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN") {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+</head>
+
+<body class="fullcontent">
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+
+<main class="content" id="quarto-document-content">
+
+
+
+
+<p>Vamos a cargar el dataset de AirBnB descargado de <a href="https://public.opendatasoft.com/explore/dataset/airbnb-listings/export/?disjunctive.host_verifications&amp;disjunctive.amenities&amp;disjunctive.features&amp;q=Madrid&amp;dataChart=eyJxdWVyaWVzIjpbeyJjaGFydHMiOlt7InR5cGUiOiJjb2x1bW4iLCJmdW5jIjoiQ09VTlQiLCJ5QXhpcyI6Imhvc3RfbGlzdGluZ3NfY291bnQiLCJzY2llbnRpZmljRGlzcGxheSI6dHJ1ZSwiY29sb3IiOiJyYW5nZS1jdXN0b20ifV0sInhBeGlzIjoiY2l0eSIsIm1heHBvaW50cyI6IiIsInRpbWVzY2FsZSI6IiIsInNvcnQiOiIiLCJzZXJpZXNCcmVha2Rvd24iOiJyb29tX3R5cGUiLCJjb25maWciOnsiZGF0YXNldCI6ImFpcmJuYi1saXN0aW5ncyIsIm9wdGlvbnMiOnsiZGlzanVuY3RpdmUuaG9zdF92ZXJpZmljYXRpb25zIjp0cnVlLCJkaXNqdW5jdGl2ZS5hbWVuaXRpZXMiOnRydWUsImRpc2p1bmN0aXZlLmZlYXR1cmVzIjp0cnVlfX19XSwidGltZXNjYWxlIjoiIiwiZGlzcGxheUxlZ2VuZCI6dHJ1ZSwiYWxpZ25Nb250aCI6dHJ1ZX0%3D&amp;location=16,41.38377,2.15774&amp;basemap=jawg.streets">aquí</a></p>
+<p><img src="descargar.png" class="img-fluid"></p>
+<pre class="{r}"><code># Carga del dataset de airbnb
+airbnb &lt;- read.csv('airbnb-listings.csv',sep = ';')
+options(repr.plot.height = 4,repr.plot.width = 6,repr.plot.res = 300)</code></pre>
+<ol type="1">
+<li><p>Vamos a quedarnos con las columnas de mayor interés: ‘City’,‘Room.Type’,‘Neighbourhood’,‘Accommodates’,‘Bathrooms’,‘Bedrooms’,‘Beds’,‘Price’,‘Square.Feet’,‘Guests.Included’,‘Extra.People’,‘Review.Scores.Rating’,‘Latitude’, ‘Longitude’ Nos quedarmos solo con las entradas de Madrid para Room.Type==“Entire home/apt” y cuyo barrio (Neighbourhood) no está vacio ’’ Podemos eliminar las siguientes columnas que ya no son necesarias: “Room.Type”,‘City’ Llama a nuevo dataframe df_madrid.</p>
+<pre class="{r}"><code>library(dplyr)
+# Selección de columnas
+airbnb &lt;- airbnb[,c('City','Room.Type','Neighbourhood','Accommodates','Bathrooms','Bedrooms','Beds','Price','Square.Feet','Guests.Included','Extra.People','Review.Scores.Rating','Latitude', 'Longitude')]
+airbnb
+
+# Creación del df de Madrid con Room Type = Entire home/apt
+df_madrid &lt;- airbnb |&gt; filter(City == 'Madrid') |&gt; filter(Room.Type == 'Entire home/apt')
+
+# Convertimos los datos vacios de Neighbourhood en NA
+df_madrid$Neighbourhood[which(df_madrid$Neighbourhood == '')] &lt;- NA
+
+# Elimimanos los datos que tienen NA en Neighbourhood y eliminamos las columnas City y Room Type
+df_madrid &lt;- df_madrid |&gt; filter(!is.na(Neighbourhood)) |&gt; select(-c('City','Room.Type'))
+
+df_madrid</code></pre>
+<hr></li>
+<li><p>Crea una nueva columna llamada Square.Meters a partir de Square.Feet. Recuerda que un pie cuadrado son 0.092903 metros cuadrados.</p>
+<pre class="{r}"><code># Añadir columna de metros cuadrados convirtiendo la columna de pies cuadrados
+rateToSquareMeter &lt;- 0.092903
+
+df_madrid$Square.Meters &lt;- df_madrid$Square.Feet*rateToSquareMeter
+
+df_madrid</code></pre>
+<hr></li>
+<li><p>¿Que porcentaje de los apartamentos no muestran los metros cuadrados? Es decir, ¿cuantos tienen NA en Square.Meters?</p>
+<pre class="{r}"><code># Porcentaje de apartamentos que no muestran metros cuadrados 
+totalApartment &lt;- nrow(df_madrid)  # Total de apartamentos
+naApartment &lt;- sum(is.na(df_madrid$Square.Meters)) # Apartamentos que tienen Na como valor
+porcentageNaApartament &lt;- (naApartment/totalApartment)*100
+paste('El porcentaje de apartamentos que no muestran los metros cuadrados es', round(porcentageNaApartament,2),'%') # Redondeo a 2 decimales</code></pre></li>
+</ol>
+<pre class="{r}"><code>    # Lo mismo con BINOM.TEST
+    binom.test(naApartment,totalApartment)</code></pre>
+<hr>
+<ol start="4" type="1">
+<li><p>De todos los apartamentos que tienen un valor de metros cuadrados diferente de NA ¿Que porcentaje de los apartamentos tienen 0 metros cuadrados?</p>
+<pre class="{r}"><code># Porcentaje de apartamentos con 0 m2 de los apartamentos que tienen datos
+apartmentSquareMeter &lt;- df_madrid |&gt; filter(!is.na(Square.Meters))
+totalApartmentNo0 &lt;- nrow(apartmentSquareMeter)  # Total de apartamentos de los que tenemos datos
+ceroApartment &lt;- sum(apartmentSquareMeter$Square.Meters == 0) # Apartamentos que tienen 0 como valor
+porcentageCeroApartament &lt;- (ceroApartment/totalApartmentNo0)*100
+paste('El porcentaje de apartamentos con 0 metros cuadrados es', round(porcentageCeroApartament,2),'%') # Redondeo a dos decimales
+</code></pre></li>
+</ol>
+<pre class="{r}"><code>#Con BINOM.TEST
+binom.test(ceroApartment,totalApartmentNo0)</code></pre>
+<hr>
+<ol start="5" type="1">
+<li><p>Reemplazar todos los 0m^2 por NA</p>
+<pre class="{r}"><code># Reemplazar los apartamentos con 2 m2 por NA
+df_madrid$Square.Meters[which(df_madrid$Square.Meters == 0)] &lt;- NA
+
+df_madrid</code></pre></li>
+</ol>
+<hr>
+<p>Hay muchos NAs, vamos a intentar crear un modelo que nos prediga cuantos son los metros cuadrados en función del resto de variables para tratar de rellenar esos NA. Pero <strong>antes de crear el modelo</strong> vamos a hacer: * pintar el histograma de los metros cuadrados y ver si tenemos que filtrar algún elemento más. * crear una variable sintética nueva basada en la similitud entre barrios que usaremos en nuestro modelo.</p>
+<ol start="6" type="1">
+<li><p>Pinta el histograma de los metros cuadrados y ver si tenemos que filtrar algún elemento más.</p>
+<pre class="{r}"><code># Pintamos el histagrama 
+library(ggplot2)
+ggplot(data = df_madrid, aes(x = Square.Meters)) +
+  geom_histogram(fill = 'blue', color = 'black', bins = 20) +
+  xlab('Metros cuadrados') + ylab('Conteo') +
+    ggtitle('Histograma m2 apartamentos Madrid')</code></pre></li>
+</ol>
+<p>Podemos ver que hay pocas muestras de apartamentos de 180-200m2 en adelante, y que no hay apartamentos entre 200 y 500 m2</p>
+<ol start="7" type="1">
+<li><p>Asigna el valor NA a la columna Square.Meters de los apartamentos que tengan menos de 20 m^2.</p>
+<pre class="{r}"><code># Reemplazar los pisos con menos de 20 m2 por NA
+df_madrid$Square.Meters[which(df_madrid$Square.Meters &lt; 20)] &lt;- NA
+df_madrid</code></pre></li>
+</ol>
+<hr>
+<ol start="8" type="1">
+<li><p>Existen varios Barrios que todas sus entradas de Square.Meters son NA, vamos a eliminar del dataset todos los pisos que pertenecen a estos barrios.</p>
+<pre class="{r}"><code># Filtrar los barrios todos los pisos tienen Square.Meter
+neighbourhood_with_metres &lt;- unique(df_madrid$Neighbourhood[!is.na(df_madrid$Square.Meters)])
+
+# Filtrar el dataset eliminando los pisos de los barrios sin metros cuadrados
+df_filter_madrid &lt;- df_madrid |&gt; filter(Neighbourhood %in% neighbourhood_with_metres)
+
+df_filter_madrid
+</code></pre></li>
+</ol>
+<hr>
+<ol start="9" type="1">
+<li><p>¿Tienen todos los barrios los mismos metros cuadrados de media? ¿Con que test lo comprobarías?</p>
+<pre class="{r}"><code># COMPROBAR SI SIGUE UNA DISTRIBUCIÓN NORMAL
+shapiro.test(df_filter_madrid$Square.Meters)</code></pre></li>
+</ol>
+<p>Con un p-valor menor a 0.05 descartamos la hipótesis de que sigue una distribución normal. Aplicamos el test Kruskal.</p>
+<pre class="{r}"><code>
+# La hipótesis nula afirma que todos los Barrios tienen la misma media de metros cuadrados.
+kruskalTest_madrid &lt;- kruskal.test(Square.Meters ~ Neighbourhood, data = df_filter_madrid)
+kruskalTest_madrid</code></pre>
+<p>El p-valor es menor de 0.05, por lo que no podemos asumir que todos los Barrios tienen la misma media de metros cuadrados y los consideramos diferentes.</p>
+<hr>
+<ol start="10" type="1">
+<li><p>Vamos a agrupar los barrios por metros cuadrados. Podemos usar una matriz de similaridad de Tukey. Muestra como de similares o diferentes son los barrios si nos fijámos únicamente en los metros cuadrados de los pisos. ¿Como se diferencia la media del Barrio A al Barrio B? (Es decir, cual sería el pvalor suponiendo una H0 en la que las medias son iguales).</p>
+<p>```{r fig.height=10, fig.width=13} tkyMadrid &lt;- TukeyHSD(aov(Square.Meters ~ Neighbourhood, data = df_filter_madrid)) tkyMadrid</p>
+<p>tkyMadrid.result &lt;- data.frame(tkyMadrid<span class="math inline">\(Neighbourhood)
+cn &lt;- sort(unique(df_filter_madrid\)</span>Neighbourhood)) resm &lt;- matrix(NA, length(cn),length(cn)) rownames(resm) &lt;- cn colnames(resm) &lt;- cn resm[lower.tri(resm) ] &lt;- round(tkyMadrid.result$p.adj,4) resm[upper.tri(resm) ] &lt;- t(resm)[upper.tri(resm)] diag(resm) &lt;- 1 library(ggplot2) library(reshape2) dfResm &lt;- melt(resm) ggplot(dfResm, aes(x = Var1, y = Var2, fill = value)) + geom_tile(colour = “black”) + geom_text(aes(label = paste(round(value*100,0),“%”)),size = 3) + scale_fill_gradient(low = “white”,high = “darkorange”) + ylab(“Class”) + xlab(“Class”) + theme_bw() + theme(axis.text.x = element_text(angle = 90, hjust = 1),legend.position = “none”)</p>
+<p>```</p></li>
+</ol>
+<p>La hipótesis nula es que no hay diferencia significativa entre las medias de todos los pares de barrios que tienen un p adj alto, con lo que podemos ver que algunos barrios como Jerónimos y Acacias si tienen diferencias pero otros muchos no las tienen.</p>
+<hr>
+<ol start="11" type="1">
+<li><p>En el punto anterior has creado una matriz de p-valores que indica como de parecidos son dos barrios. Si su pvalor es alto significa que los barrios son parecidos, si es bajo significa que los barrios son diferentes Esta matriz la podemos usar como matriz de distancia si restamos el pvalor a 1. Es decir si usamos como distancia 1-pvalor. De esta forma barrios con un pvalor alto tendrán una distancia mayor que aquellos con un pvalor bajo. Usando esta última métrica como matriz de distancias dibuja un dendrograma de los diferentes barrios.</p>
+<pre class="{r}"><code>library(dendextend)
+distance &lt;- as.dist(1 - abs(resm))
+hcd &lt;- hclust(distance, method = "complete")
+madrid.dend &lt;- as.dendrogram(hcd) 
+madrid.dend &lt;- set(madrid.dend,"labels_cex", 0.5) 
+plot(color_branches(madrid.dend,h = 0.01),horiz = TRUE,cex = 0)
+abline(v = 0.1,col = "red")
+</code></pre></li>
+</ol>
+<hr>
+<ol start="12" type="1">
+<li><p>¿Que punto de corte sería el aconsejable?, ¿cuantos clusters aparecen? Segun la imagen ponemos el corte en 0.1 para conseguir 3 clúster.</p>
+<p>```{r fig.height=10, fig.width=8} library(cluster) clusters &lt;- cutree_1h.dendrogram(madrid.dend,h = 0.1) ss &lt;- silhouette(clusters, distance) plot(ss,col = 1:max(clusters),border = NA)</p>
+<p>```</p></li>
+</ol>
+<p>Tenemos un clúster muy definido que es el 3.</p>
+<hr>
+<ol start="13" type="1">
+<li><p>Vamos a crear una nueva columna en el dataframe df_madrid con un nuevo identificador marcado por los clusters obtenidos. Esta columna la llamaremos neighb_id.</p>
+<pre class="{r}"><code>df_cluster &lt;- data.frame(clusters) # Convierte clusters a data frame
+df_madrid_cluster &lt;- merge(df_filter_madrid, df_cluster) # Lo uno con el df_filter_madrid
+df_madrid_cluster &lt;- df_madrid_cluster |&gt; rename(neighb_id = clusters) # Renombro la columna clusters a neighb_id
+df_madrid_cluster$neighb_id &lt;- as.factor(df_madrid_cluster$neighb_id) # La paso a factor
+summary(df_madrid_cluster)</code></pre></li>
+</ol>
+<hr>
+<ol start="14" type="1">
+<li><p>Vamos a crear dos grupos, uno test y otro train.</p>
+<pre class="{r}"><code>set.seed(12345)
+df_madrid_cluster &lt;- df_madrid_cluster |&gt; na.omit(df_madrid_cluster$Review.Scores.Rating)
+idx &lt;- sample(1:nrow(df_madrid_cluster),nrow(df_madrid_cluster)*0.7)
+df_madrid.train &lt;- df_madrid_cluster[idx,] # DATA FRAME DE TRAINING
+df_madrid.test &lt;- df_madrid_cluster[-idx,] # DATA FRAME DE TESTING
+df_madrid.test
+df_madrid.train
+df_madrid_cluster</code></pre></li>
+</ol>
+<hr>
+<ol start="15" type="1">
+<li><p>Tratamos de predecir los metros cuadrados en función del resto de columnas del dataframe.</p>
+<pre class="{r}"><code># USAMOS UNA REGRESION LINEAL
+modelMadrid &lt;- lm(Square.Meters~Accommodates+Bathrooms+Bedrooms+Beds+Price+Review.Scores.Rating+neighb_id,df_madrid.train)
+summary(modelMadrid)
+confint(modelMadrid)
+
+df_madrid.train$sqm_est &lt;- predict(modelMadrid, df_madrid.train)
+df_madrid.test$sqm_est &lt;- predict(modelMadrid, df_madrid.test)
+</code></pre></li>
+</ol>
+<hr>
+<ol start="16" type="1">
+<li><p>Evaluar la calidad de vuestro modelo</p>
+<pre class="{r}"><code># Comparativa de los errores cuadráticos medios y R2 en training y testing
+caret::postResample(pred = predict(modelMadrid, df_madrid.train), obs = df_madrid.train$Square.Meters)
+caret::postResample(pred = predict(modelMadrid, df_madrid.test), obs = df_madrid.test$Square.Meters)
+
+# Gráfica para ver la distancia de Cook
+plot(cooks.distance(modelMadrid))
+
+# Pintamos un gráfico de puntos para ver según los metros cuadrados el residuo entre el valor real y el estamido en testing.
+ggplot(df_madrid.train, aes(x = Square.Meters, y = Square.Meters - sqm_est)) + geom_point()
+
+# Comprobamos en un gráfico si lso residuos siguen una distribución normal
+qqnorm(df_madrid.train$Square.Meters - df_madrid.train$sqm_est)
+qqline(df_madrid.train$Square.Meters - df_madrid.train$sqm_est, col = 'orange', lwd = 2)
+</code></pre></li>
+</ol>
+<p>Tenemos algunos puntos que no ajusta del todo bien, sobretodo en apartamentos con pocos metros cuadrados o muchos metros cuadrados. Por lo analizado previamente puede ser por tener pocas muestras en esos casos pero en la zona media ajusta bastante bien.</p>
+<ol start="17" type="1">
+<li><p>Si tuvieramos un anuncio de un apartamento para 6 personas (Accommodates), con 1 baño, con un precio de 80€/noche y 3 habitaciones en el barrio de Sol, con 3 camas y un review de 80. ¿Cuantos metros cuadrados tendría? Si tu modelo necesita algúna variable adicional puedes inventartela dentro del rango de valores del dataset. ¿Como varía sus metros cuadrados con cada habitación adicional?</p>
+<pre class="{r}"><code># Definir data frame con los valores
+data = data.frame(Accommodates = 6,
+                  Bathrooms = 1,
+                  Bedrooms = 3,
+                  Price = 80,
+                  Beds = 3,
+                  Review.Scores.Rating = 80,
+                  neighb_id = '2')
+estimacion_sqm &lt;- predict(modelMadrid, data)
+# Imprimir los metros cuadrados predichos
+
+paste('El aparatamento tiene: ', round(estimacion_sqm,2), ' m2')
+</code></pre></li>
+</ol>
+<pre class="{r}"><code>paste('Los m2 aumentan por habitación extra: ', round(modelMadrid$coefficients[4], 2), ' m2')</code></pre>
+<hr>
+<ol start="18" type="1">
+<li><p>Rellenar los Square.Meters con valor NA con el estimado con el modelo anterior.</p>
+<pre class="{r}"><code># Encontrar las filas con valores faltantes en Square.Meters
+miss_index &lt;- which(is.na(df_madrid_cluster$Square.Meters))
+
+# Crear un dataframe temporal con las variables predictoras para las filas con valores faltantes
+data_new &lt;- data.frame(
+  Accommodates = df_madrid_cluster$Accommodates[miss_index],
+  Bathrooms = df_madrid_cluster$Bathrooms[miss_index],
+  Bedrooms = df_madrid_cluster$Bedrooms[miss_index],
+  Price = df_madrid_cluster$Price[miss_index],
+  Beds = df_madrid_cluster$Beds[miss_index],
+  Review.Scores.Rating = df_madrid_cluster$Review.Scores.Rating[miss_index],
+  neighb_id = df_madrid_cluster$neighb_id[miss_index]
+)
+
+# Predice los valores faltantes utilizando el modelo
+predict_values &lt;- predict(modelMadrid, data_new)
+
+# Asigna los valores predichos a las filas con valores faltantes en Square.Meters
+df_madrid_cluster$Square.Meters[miss_index] &lt;- predict_values
+
+df_madrid_cluster
+</code></pre></li>
+</ol>
+<hr>
+<ol start="19" type="1">
+<li>Usar PCA para encontrar el apartamento más cercano a uno dado. Este algoritmo nos ayudaría a dado un apartamento que el algoritmo nos devolvería los 5 apartamentos más similares.</li>
+</ol>
+<p>Crearemos una función tal que le pasemos un apartamento con los siguientes datos: * Accommodates * Bathrooms * Bedrooms * Beds * Price * Guests.Included * Extra.People * Review.Scores.Rating * Latitude * Longitude * Square.Meters y nos devuelva los 5 más similares de:</p>
+<pre class="{r}"><code># Seleccion las columnas númericas de mi data frame
+df_madrid_pca &lt;- df_madrid_cluster |&gt; select(-c('Neighbourhood','Square.Feet','neighb_id'))
+# Convierto el data frame en matriz
+pca_matrix &lt;- as.matrix(df_madrid_pca)
+# Creo un data frame con el apartamento que quiero buscar los más similares
+new_apartment &lt;- data.frame(Accommodates = 4, Bathrooms = 1.0, Bedrooms = 2, Beds = 4,Price = 90, Guests.Included = 2, Extra.People = 2, Review.Scores.Rating = 87, Latitude = 40.000000, Longitude = -3.00000, Square.Meters = 66.08)
+</code></pre>
+<pre class="{r}"><code># Aplico un  modelo PCA 
+pr_madrid &lt;- prcomp(pca_matrix,center = TRUE, scale. = TRUE)
+str(pr_madrid)
+pr_madrid$sdev
+pr_madrid$rotation
+</code></pre>
+<pre class="{r}"><code># Aplico el predict con el modelo anterior a mi nuevo apartamento
+apartment_transform &lt;- predict(pr_madrid, as.matrix(new_apartment))
+apartment_transform
+# Compruebo en el gráfico los autovalores para ver con cuantos PCA me quedo
+plot(cumsum(pr_madrid$sdev^2/sum(pr_madrid$sdev^2)),main = "Autovalores")
+grid()</code></pre>
+<p>Cogeremos los componentes que acumulan entre un 80-90% de la varianza. PCA = 6</p>
+<pre class="{r}"><code>number_of_pca_components &lt;- 6
+knn &lt;- 5
+apart_pca &lt;- apartment_transform[, 1:number_of_pca_components]
+Apc &lt;-pr_madrid$x[,1:number_of_pca_components]
+dist &lt;- rowSums((apart_pca - Apc)^2)   
+      
+knn_tags &lt;-rownames(pca_matrix)[order(dist,decreasing = F) %in% c(1:knn)]
+knn_tags
+</code></pre>
+<pre class="{r}"><code>neigbourhood_near &lt;- df_madrid_cluster[knn_tags,]
+neigbourhood_near</code></pre>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const isCodeAnnotation = (el) => {
+    for (const clz of el.classList) {
+      if (clz.startsWith('code-annotation-')) {                     
+        return true;
+      }
+    }
+    return false;
+  }
+  const clipboard = new window.ClipboardJS('.code-copy-button', {
+    text: function(trigger) {
+      const codeEl = trigger.previousElementSibling.cloneNode(true);
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+  });
+  clipboard.on('success', function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  });
+    var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+    var mailtoRegex = new RegExp(/^mailto:/);
+      var filterRegex = new RegExp('/' + window.location.host + '/');
+    var isInternal = (href) => {
+        return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+    }
+    // Inspect non-navigation links and adorn them if external
+ 	var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool)');
+    for (var i=0; i<links.length; i++) {
+      const link = links[i];
+      if (!isInternal(link.href)) {
+        // undo the damage that might have been done by quarto-nav.js in the case of
+        // links that we want to consider external
+        if (link.dataset.originalHref !== undefined) {
+          link.href = link.dataset.originalHref;
+        }
+      }
+    }
+  function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+    const config = {
+      allowHTML: true,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start',
+    };
+    if (contentFn) {
+      config.content = contentFn;
+    }
+    if (onTriggerFn) {
+      config.onTrigger = onTriggerFn;
+    }
+    if (onUntriggerFn) {
+      config.onUntrigger = onUntriggerFn;
+    }
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      if (note) {
+        return note.innerHTML;
+      } else {
+        return "";
+      }
+    });
+  }
+  const xrefs = window.document.querySelectorAll('a.quarto-xref');
+  const processXRef = (id, note) => {
+    // Strip column container classes
+    const stripColumnClz = (el) => {
+      el.classList.remove("page-full", "page-columns");
+      if (el.children) {
+        for (const child of el.children) {
+          stripColumnClz(child);
+        }
+      }
+    }
+    stripColumnClz(note)
+    if (id === null || id.startsWith('sec-')) {
+      // Special case sections, only their first couple elements
+      const container = document.createElement("div");
+      if (note.children && note.children.length > 2) {
+        container.appendChild(note.children[0].cloneNode(true));
+        for (let i = 1; i < note.children.length; i++) {
+          const child = note.children[i];
+          if (child.tagName === "P" && child.innerText === "") {
+            continue;
+          } else {
+            container.appendChild(child.cloneNode(true));
+            break;
+          }
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(container);
+        }
+        return container.innerHTML
+      } else {
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        return note.innerHTML;
+      }
+    } else {
+      // Remove any anchor links if they are present
+      const anchorLink = note.querySelector('a.anchorjs-link');
+      if (anchorLink) {
+        anchorLink.remove();
+      }
+      if (window.Quarto?.typesetMath) {
+        window.Quarto.typesetMath(note);
+      }
+      // TODO in 1.5, we should make sure this works without a callout special case
+      if (note.classList.contains("callout")) {
+        return note.outerHTML;
+      } else {
+        return note.innerHTML;
+      }
+    }
+  }
+  for (var i=0; i<xrefs.length; i++) {
+    const xref = xrefs[i];
+    tippyHover(xref, undefined, function(instance) {
+      instance.disable();
+      let url = xref.getAttribute('href');
+      let hash = undefined; 
+      if (url.startsWith('#')) {
+        hash = url;
+      } else {
+        try { hash = new URL(url).hash; } catch {}
+      }
+      if (hash) {
+        const id = hash.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note !== null) {
+          try {
+            const html = processXRef(id, note.cloneNode(true));
+            instance.setContent(html);
+          } finally {
+            instance.enable();
+            instance.show();
+          }
+        } else {
+          // See if we can fetch this
+          fetch(url.split('#')[0])
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.getElementById(id);
+            if (note !== null) {
+              const html = processXRef(id, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      } else {
+        // See if we can fetch a full url (with no hash to target)
+        // This is a special case and we should probably do some content thinning / targeting
+        fetch(url)
+        .then(res => res.text())
+        .then(html => {
+          const parser = new DOMParser();
+          const htmlDoc = parser.parseFromString(html, "text/html");
+          const note = htmlDoc.querySelector('main.content');
+          if (note !== null) {
+            // This should only happen for chapter cross references
+            // (since there is no id in the URL)
+            // remove the first header
+            if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+              note.children[0].remove();
+            }
+            const html = processXRef(null, note);
+            instance.setContent(html);
+          } 
+        }).finally(() => {
+          instance.enable();
+          instance.show();
+        });
+      }
+    }, function(instance) {
+    });
+  }
+      let selectedAnnoteEl;
+      const selectorForAnnotation = ( cell, annotation) => {
+        let cellAttr = 'data-code-cell="' + cell + '"';
+        let lineAttr = 'data-code-annotation="' +  annotation + '"';
+        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+        return selector;
+      }
+      const selectCodeLines = (annoteEl) => {
+        const doc = window.document;
+        const targetCell = annoteEl.getAttribute("data-target-cell");
+        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+        const lineIds = lines.map((line) => {
+          return targetCell + "-" + line;
+        })
+        let top = null;
+        let height = null;
+        let parent = null;
+        if (lineIds.length > 0) {
+            //compute the position of the single el (top and bottom and make a div)
+            const el = window.document.getElementById(lineIds[0]);
+            top = el.offsetTop;
+            height = el.offsetHeight;
+            parent = el.parentElement.parentElement;
+          if (lineIds.length > 1) {
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+            height = bottom - top;
+          }
+          if (top !== null && height !== null && parent !== null) {
+            // cook up a div (if necessary) and position it 
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            div.style.top = top - 2 + "px";
+            div.style.height = height + 4 + "px";
+            div.style.left = 0;
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            gutterDiv.style.top = top - 2 + "px";
+            gutterDiv.style.height = height + 4 + "px";
+          }
+          selectedAnnoteEl = annoteEl;
+        }
+      };
+      const unselectCodeLines = () => {
+        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+        elementsIds.forEach((elId) => {
+          const div = window.document.getElementById(elId);
+          if (div) {
+            div.remove();
+          }
+        });
+        selectedAnnoteEl = undefined;
+      };
+        // Handle positioning of the toggle
+    window.addEventListener(
+      "resize",
+      throttle(() => {
+        elRect = undefined;
+        if (selectedAnnoteEl) {
+          selectCodeLines(selectedAnnoteEl);
+        }
+      }, 10)
+    );
+    function throttle(fn, ms) {
+    let throttle = false;
+    let timer;
+      return (...args) => {
+        if(!throttle) { // first call gets through
+            fn.apply(this, args);
+            throttle = true;
+        } else { // all the others get throttled
+            if(timer) clearTimeout(timer); // cancel #2
+            timer = setTimeout(() => {
+              fn.apply(this, args);
+              timer = throttle = false;
+            }, ms);
+        }
+      };
+    }
+      // Attach click handler to the DT
+      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+      for (const annoteDlNode of annoteDls) {
+        annoteDlNode.addEventListener('click', (event) => {
+          const clickedEl = event.target;
+          if (clickedEl !== selectedAnnoteEl) {
+            unselectCodeLines();
+            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+            if (activeEl) {
+              activeEl.classList.remove('code-annotation-active');
+            }
+            selectCodeLines(clickedEl);
+            clickedEl.classList.add('code-annotation-active');
+          } else {
+            // Unselect the line
+            unselectCodeLines();
+            clickedEl.classList.remove('code-annotation-active');
+          }
+        });
+      }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>
