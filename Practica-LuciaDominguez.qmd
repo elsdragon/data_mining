@@ -327,7 +327,7 @@ paste('Los m2 aumentan por habitación extra: ', round(modelMadrid$coefficients[
     # Asigna los valores predichos a las filas con valores faltantes en Square.Meters
     df_madrid_cluster$Square.Meters[miss_index] <- predict_values
 
-    df_madrid_cluster
+    View(df_madrid_cluster)
 
     ```
 
@@ -338,12 +338,12 @@ paste('Los m2 aumentan por habitación extra: ', round(modelMadrid$coefficients[
 Crearemos una función tal que le pasemos un apartamento con los siguientes datos: \* Accommodates \* Bathrooms \* Bedrooms \* Beds \* Price \* Guests.Included \* Extra.People \* Review.Scores.Rating \* Latitude \* Longitude \* Square.Meters y nos devuelva los 5 más similares de:
 
 ```{r}
-# Seleccion las columnas númericas de mi data frame
+# Seleccion las columnas númericas del data frame
 df_madrid_pca <- df_madrid_cluster |> select(-c('Neighbourhood','Square.Feet','neighb_id'))
 # Convierto el data frame en matriz
 pca_matrix <- as.matrix(df_madrid_pca)
 # Creo un data frame con el apartamento que quiero buscar los más similares
-new_apartment <- data.frame(Accommodates = 4, Bathrooms = 1.0, Bedrooms = 2, Beds = 4,Price = 90, Guests.Included = 2, Extra.People = 2, Review.Scores.Rating = 87, Latitude = 40.000000, Longitude = -3.00000, Square.Meters = 66.08)
+new_apartment <- data.frame(Accommodates = 2, Bathrooms = 1.0, Bedrooms = 2, Beds = 4,Price = 90, Guests.Included = 2, Extra.People = 2, Review.Scores.Rating = 87, Latitude = 40.000000, Longitude = -3.00000, Square.Meters = 66.08)
 
 ```
 
@@ -368,18 +368,26 @@ grid()
 Cogeremos los componentes que acumulan entre un 80-90% de la varianza. PCA = 6
 
 ```{r}
+# Asigno el numero componentes PCA
 number_of_pca_components <- 6
+# Asigno el número de vecinos que quiero encontrar
 knn <- 5
+# Me quedo con el número de coeficientes de PCA que he elegido en el apartamento de test
 apart_pca <- apartment_transform[, 1:number_of_pca_components]
-Apc <-pr_madrid$x[,1:number_of_pca_components]
-dist <- rowSums((apart_pca - Apc)^2)   
-      
-knn_tags <-rownames(pca_matrix)[order(dist,decreasing = F) %in% c(1:knn)]
+# Me quedo con el número de coeficientes del modelo
+Amad <- pr_madrid$x[,1:number_of_pca_components]
+
+# Calculo la distancia euclídea
+dist <- rowSums((Amad - apart_pca)^2)   
+dist
+# Selecciono los 5 apartamentos que cumplen con la distancia       
+knn_tags <- order(dist,decreasing = F)[1:knn]
 knn_tags
 
 ```
 
 ```{r}
-neigbourhood_near <- df_madrid_cluster[knn_tags,]
+# Selecciono las filas del data frame que tienen esos apartamentos.
+neigbourhood_near <- df_madrid_cluster[knn_tags,] 
 neigbourhood_near
 ```
