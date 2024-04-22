@@ -306,12 +306,12 @@ df_madrid_cluster
 <li>Usar PCA para encontrar el apartamento más cercano a uno dado. Este algoritmo nos ayudaría a dado un apartamento que el algoritmo nos devolvería los 5 apartamentos más similares.</li>
 </ol>
 <p>Crearemos una función tal que le pasemos un apartamento con los siguientes datos: * Accommodates * Bathrooms * Bedrooms * Beds * Price * Guests.Included * Extra.People * Review.Scores.Rating * Latitude * Longitude * Square.Meters y nos devuelva los 5 más similares de:</p>
-<pre class="{r}"><code># Seleccion las columnas númericas de mi data frame
+<pre class="{r}"><code># Seleccion las columnas númericas del data frame
 df_madrid_pca &lt;- df_madrid_cluster |&gt; select(-c('Neighbourhood','Square.Feet','neighb_id'))
 # Convierto el data frame en matriz
 pca_matrix &lt;- as.matrix(df_madrid_pca)
 # Creo un data frame con el apartamento que quiero buscar los más similares
-new_apartment &lt;- data.frame(Accommodates = 4, Bathrooms = 1.0, Bedrooms = 2, Beds = 4,Price = 90, Guests.Included = 2, Extra.People = 2, Review.Scores.Rating = 87, Latitude = 40.000000, Longitude = -3.00000, Square.Meters = 66.08)
+new_apartment &lt;- data.frame(Accommodates = 2, Bathrooms = 1.0, Bedrooms = 2, Beds = 4,Price = 90, Guests.Included = 2, Extra.People = 2, Review.Scores.Rating = 87, Latitude = 40.000000, Longitude = -3.00000, Square.Meters = 66.08)
 </code></pre>
 <pre class="{r}"><code># Aplico un  modelo PCA 
 pr_madrid &lt;- prcomp(pca_matrix,center = TRUE, scale. = TRUE)
@@ -326,16 +326,23 @@ apartment_transform
 plot(cumsum(pr_madrid$sdev^2/sum(pr_madrid$sdev^2)),main = "Autovalores")
 grid()</code></pre>
 <p>Cogeremos los componentes que acumulan entre un 80-90% de la varianza. PCA = 6</p>
-<pre class="{r}"><code>number_of_pca_components &lt;- 6
+<pre class="{r}"><code># Asigno el numero componentes PCA
+number_of_pca_components &lt;- 6
+# Asigno el número de vecinos que quiero encontrar
 knn &lt;- 5
+# Me quedo con el número de coeficientes de PCA que he elegido en el apartamento de test
 apart_pca &lt;- apartment_transform[, 1:number_of_pca_components]
-Apc &lt;-pr_madrid$x[,1:number_of_pca_components]
-dist &lt;- rowSums((apart_pca - Apc)^2)   
-      
-knn_tags &lt;-rownames(pca_matrix)[order(dist,decreasing = F) %in% c(1:knn)]
+# Me quedo con el número de coeficientes del modelo
+Amad &lt;- pr_madrid$x[,1:number_of_pca_components]
+
+# Calculo la distancia euclídea
+dist &lt;- rowSums((Amad - apart_pca)^2)   
+# Selecciono los 5 apartamentos que cumplen con la distancia       
+knn_tags &lt;- order(dist,decreasing = F)[1:knn]
 knn_tags
 </code></pre>
-<pre class="{r}"><code>neigbourhood_near &lt;- df_madrid_cluster[knn_tags,]
+<pre class="{r}"><code># Selecciono las filas del data frame que tienen esos apartamentos.
+neigbourhood_near &lt;- df_madrid_cluster[knn_tags,] 
 neigbourhood_near</code></pre>
 
 </main>

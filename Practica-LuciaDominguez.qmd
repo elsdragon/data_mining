@@ -61,7 +61,7 @@ options(repr.plot.height = 4,repr.plot.width = 6,repr.plot.res = 300)
     ```
 
 ```{r}
-    # Lo mismo con BINOM.TEST
+    # Podemos aplicar un test binomial donde en probatility of sucess podemos ver el mismo porcentaje.
     binom.test(naApartment,totalApartment)
 ```
 
@@ -80,7 +80,7 @@ options(repr.plot.height = 4,repr.plot.width = 6,repr.plot.res = 300)
     ```
 
 ```{r}
-#Con BINOM.TEST
+#Comprobamos con un test binomial igual que en le punto anterior
 binom.test(ceroApartment,totalApartmentNo0)
 ```
 
@@ -89,7 +89,7 @@ binom.test(ceroApartment,totalApartmentNo0)
 5.  Reemplazar todos los 0m\^2 por NA
 
     ```{r}
-    # Reemplazar los apartamentos con 2 m2 por NA
+    # Reemplazar los apartamentos con 0 m2 por NA
     df_madrid$Square.Meters[which(df_madrid$Square.Meters == 0)] <- NA
 
     df_madrid
@@ -147,7 +147,6 @@ Podemos ver que hay pocas muestras de apartamentos de 180-200m2 en adelante, y q
 Con un p-valor menor a 0.05 descartamos la hipótesis de que sigue una distribución normal. Aplicamos el test Kruskal.
 
 ```{r}
-
 # La hipótesis nula afirma que todos los Barrios tienen la misma media de metros cuadrados.
 kruskalTest_madrid <- kruskal.test(Square.Meters ~ Neighbourhood, data = df_filter_madrid)
 kruskalTest_madrid
@@ -203,7 +202,9 @@ La hipótesis nula es que no hay diferencia significativa entre las medias de to
 
 ------------------------------------------------------------------------
 
-12. ¿Que punto de corte sería el aconsejable?, ¿cuantos clusters aparecen? Segun la imagen ponemos el corte en 0.1 para conseguir 3 clúster.
+12. ¿Que punto de corte sería el aconsejable?, ¿cuantos clusters aparecen?
+
+    Segun la imagen ponemos el corte en 0.1 para conseguir 3 clúster.
 
     ```{r fig.height=10, fig.width=8}
     library(cluster)
@@ -220,11 +221,10 @@ Tenemos un clúster muy definido que es el 3.
 13. Vamos a crear una nueva columna en el dataframe df_madrid con un nuevo identificador marcado por los clusters obtenidos. Esta columna la llamaremos neighb_id.
 
     ```{r}
-    df_cluster <- data.frame(clusters) # Convierte clusters a data frame
-    df_madrid_cluster <- merge(df_filter_madrid, df_cluster) # Lo uno con el df_filter_madrid
-    df_madrid_cluster <- df_madrid_cluster |> rename(neighb_id = clusters) # Renombro la columna clusters a neighb_id
-    df_madrid_cluster$neighb_id <- as.factor(df_madrid_cluster$neighb_id) # La paso a factor
-    summary(df_madrid_cluster)
+    df_filter_madrid$neighb_id <- clusters[df_filter_madrid$Neighbourhood]
+
+    df_filter_madrid$neighb_id <- as.factor(df_filter_madrid$neighb_id) # La paso a factor
+    df_filter_madrid
     ```
 
 ------------------------------------------------------------------------
@@ -233,13 +233,18 @@ Tenemos un clúster muy definido que es el 3.
 
     ```{r}
     set.seed(12345)
-    df_madrid_cluster <- df_madrid_cluster |> na.omit(df_madrid_cluster$Review.Scores.Rating)
+    # Elimino los NA en la columan de Review.Scores.Rating que luego me están danda NA en el MSE
+    df_madrid_cluster <- df_filter_madrid # |> na.omit(df_filter_madrid)
+    # Selecciono los idx de forma aleatoaria, pongo una semilla para evitar cada vez tener unos resultados.
     idx <- sample(1:nrow(df_madrid_cluster),nrow(df_madrid_cluster)*0.7)
+
+    # Selecciono los data frames con esos indices
     df_madrid.train <- df_madrid_cluster[idx,] # DATA FRAME DE TRAINING
     df_madrid.test <- df_madrid_cluster[-idx,] # DATA FRAME DE TESTING
+
+    df_madrid_cluster
     df_madrid.test
     df_madrid.train
-    df_madrid_cluster
     ```
 
 ------------------------------------------------------------------------
@@ -247,11 +252,12 @@ Tenemos un clúster muy definido que es el 3.
 15. Tratamos de predecir los metros cuadrados en función del resto de columnas del dataframe.
 
     ```{r}
-    # USAMOS UNA REGRESION LINEAL
+    # USO UNA REGRESION LINEAL  PARA MI MODELO
     modelMadrid <- lm(Square.Meters~Accommodates+Bathrooms+Bedrooms+Beds+Price+Review.Scores.Rating+neighb_id,df_madrid.train)
     summary(modelMadrid)
     confint(modelMadrid)
 
+    # Añado a mis data frames de training y testing una columna con la predicción del modelo
     df_madrid.train$sqm_est <- predict(modelMadrid, df_madrid.train)
     df_madrid.test$sqm_est <- predict(modelMadrid, df_madrid.test)
 
@@ -277,13 +283,14 @@ Tenemos un clúster muy definido que es el 3.
     qqline(df_madrid.train$Square.Meters - df_madrid.train$sqm_est, col = 'orange', lwd = 2)
 
     ```
+Debido a los NA nos da Na en RSME y MEA, si los quitamos nos quedamos con muy pocos datos, asi que usaremos el R2 y las gráficas para evaluar el modelo y poder usar más muestras.
 
 Tenemos algunos puntos que no ajusta del todo bien, sobretodo en apartamentos con pocos metros cuadrados o muchos metros cuadrados. Por lo analizado previamente puede ser por tener pocas muestras en esos casos pero en la zona media ajusta bastante bien.
 
 17. Si tuvieramos un anuncio de un apartamento para 6 personas (Accommodates), con 1 baño, con un precio de 80€/noche y 3 habitaciones en el barrio de Sol, con 3 camas y un review de 80. ¿Cuantos metros cuadrados tendría? Si tu modelo necesita algúna variable adicional puedes inventartela dentro del rango de valores del dataset. ¿Como varía sus metros cuadrados con cada habitación adicional?
 
     ```{r}
-    # Definir data frame con los valores
+    # Definir data frame con los valores y que está en uno de los barrios categorizados como 2
     data = data.frame(Accommodates = 6,
                       Bathrooms = 1,
                       Bedrooms = 3,
@@ -327,7 +334,7 @@ paste('Los m2 aumentan por habitación extra: ', round(modelMadrid$coefficients[
     # Asigna los valores predichos a las filas con valores faltantes en Square.Meters
     df_madrid_cluster$Square.Meters[miss_index] <- predict_values
 
-    View(df_madrid_cluster)
+    df_madrid_cluster
 
     ```
 
@@ -337,9 +344,11 @@ paste('Los m2 aumentan por habitación extra: ', round(modelMadrid$coefficients[
 
 Crearemos una función tal que le pasemos un apartamento con los siguientes datos: \* Accommodates \* Bathrooms \* Bedrooms \* Beds \* Price \* Guests.Included \* Extra.People \* Review.Scores.Rating \* Latitude \* Longitude \* Square.Meters y nos devuelva los 5 más similares de:
 
+Preparación de los datos
+
 ```{r}
 # Seleccion las columnas númericas del data frame
-df_madrid_pca <- df_madrid_cluster |> select(-c('Neighbourhood','Square.Feet','neighb_id'))
+df_madrid_pca <- df_madrid_cluster |> select(-c('Neighbourhood','Square.Feet','neighb_id')) |> na.omit()
 # Convierto el data frame en matriz
 pca_matrix <- as.matrix(df_madrid_pca)
 # Creo un data frame con el apartamento que quiero buscar los más similares
@@ -347,6 +356,7 @@ new_apartment <- data.frame(Accommodates = 2, Bathrooms = 1.0, Bedrooms = 2, Bed
 
 ```
 
+Aplico un modelo de PCA
 ```{r}
 # Aplico un  modelo PCA 
 pr_madrid <- prcomp(pca_matrix,center = TRUE, scale. = TRUE)
@@ -355,11 +365,12 @@ pr_madrid$sdev
 pr_madrid$rotation
 
 ```
-
+Aplico la predicción con el modelo al apartamento nuevo.
 ```{r}
 # Aplico el predict con el modelo anterior a mi nuevo apartamento
 apartment_transform <- predict(pr_madrid, as.matrix(new_apartment))
 apartment_transform
+
 # Compruebo en el gráfico los autovalores para ver con cuantos PCA me quedo
 plot(cumsum(pr_madrid$sdev^2/sum(pr_madrid$sdev^2)),main = "Autovalores")
 grid()
@@ -379,7 +390,6 @@ Amad <- pr_madrid$x[,1:number_of_pca_components]
 
 # Calculo la distancia euclídea
 dist <- rowSums((Amad - apart_pca)^2)   
-dist
 # Selecciono los 5 apartamentos que cumplen con la distancia       
 knn_tags <- order(dist,decreasing = F)[1:knn]
 knn_tags
