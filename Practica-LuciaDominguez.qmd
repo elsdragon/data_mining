@@ -221,7 +221,6 @@ Tenemos un clúster muy definido que es el 3 con los barrios Jerónimos y Rio Ro
 13. Vamos a crear una nueva columna en el dataframe df_madrid con un nuevo identificador marcado por los clusters obtenidos. Esta columna la llamaremos neighb_id.
 
     ```{r}
-    clusters
     df_filter_madrid$neighb_id <- clusters[df_filter_madrid$Neighbourhood]
 
     df_filter_madrid$neighb_id <- as.factor(df_filter_madrid$neighb_id) # La paso a factor
@@ -234,7 +233,6 @@ Tenemos un clúster muy definido que es el 3 con los barrios Jerónimos y Rio Ro
 
     ```{r}
     set.seed(12345)
-    
     # Selecciono los idx de forma aleatoaria, pongo una semilla para evitar cada vez tener unos resultados.
     idx <- sample(1:nrow(df_filter_madrid),nrow(df_filter_madrid)*0.7)
 
@@ -283,7 +281,8 @@ Tenemos un clúster muy definido que es el 3 con los barrios Jerónimos y Rio Ro
     qqline(df_madrid.train$Square.Meters - df_madrid.train$sqm_est, col = 'orange', lwd = 2)
 
     ```
-Debido a los NA nos da Na en RSME y MEA, si los quitamos nos quedamos con muy pocos datos, asi que usaremos el R2 y las gráficas para evaluar el modelo y poder usar más muestras.
+
+    Debido a los NA nos da Na en RSME y MEA, si los quitamos nos quedamos con muy pocos datos, asi que usaremos el R2 y las gráficas para evaluar el modelo y poder usar más muestras.
 
 Tenemos algunos puntos que no ajusta del todo bien, sobretodo en apartamentos con pocos metros cuadrados o muchos metros cuadrados. Por lo analizado previamente puede ser por tener pocas muestras en esos casos pero en la zona media ajusta bastante bien.
 
@@ -315,27 +314,14 @@ paste('Los m2 aumentan por habitación extra: ', round(modelMadrid$coefficients[
 
     ```{r}
     # Encontrar las filas con valores faltantes en Square.Meters
-    miss_index <- which(is.na(df_filter_madrid$Square.Meters))
+    miss_index <- is.na(df_filter_madrid$Square.Meters)
 
-    # Crear un dataframe temporal con las variables predictoras para las filas con valores faltantes
-    data_new <- data.frame(
-      Accommodates = df_filter_madrid$Accommodates[miss_index],
-      Bathrooms = df_filter_madrid$Bathrooms[miss_index],
-      Bedrooms = df_filter_madrid$Bedrooms[miss_index],
-      Price = df_filter_madrid$Price[miss_index],
-      Beds = df_filter_madrid$Beds[miss_index],
-      Review.Scores.Rating = df_filter_madrid$Review.Scores.Rating[miss_index],
-      neighb_id = df_filter_madrid$neighb_id[miss_index]
-    )
-
-    # Predice los valores faltantes utilizando el modelo
-    predict_values <- predict(modelMadrid, data_new)
-
+    predicted_value <- predict(modelMadrid, newdata = df_filter_madrid[miss_index, c('Accommodates', 'Bathrooms', 'Bedrooms', 'Price', 'Beds', 'Review.Scores.Rating', 'neighb_id')])
     # Asigna los valores predichos a las filas con valores faltantes en Square.Meters
-    df_filter_madrid$Square.Meters[miss_index] <- predict_values
+    df_filter_madrid$Square.Meters[miss_index] <- predicted_value
 
     df_filter_madrid
-
+    # NO RELLENA TODOS PORQUE HAY COLUMNAS CON NA EN ALGUNO DE LOS VALORES NECESARIOS PARA LA PREDICCIÓN.
     ```
 
 ------------------------------------------------------------------------
@@ -348,15 +334,17 @@ Preparación de los datos
 
 ```{r}
 # Seleccion las columnas númericas del data frame y elimino los na
-df_madrid_pca <- df_filter_madrid |> select(-c('Neighbourhood','Square.Feet','neighb_id')) |> na.omit()
+df_madrid_pca <- df_filter_madrid |> select(-c('Neighbourhood','Square.Feet','neighb_id')) |> filter(!is.na(Review.Scores.Rating)) |> filter(!is.na(Bathrooms)) |> filter(!is.na(Bedrooms)) |> filter(!is.na(Beds)) |> filter(!is.na(Price))
 # Convierto el data frame en matriz
 pca_matrix <- as.matrix(df_madrid_pca)
 # Creo un data frame con el apartamento que quiero buscar los más similares
-new_apartment <- data.frame(Accommodates = 2, Bathrooms = 1.0, Bedrooms = 2, Beds = 4,Price = 90, Guests.Included = 2, Extra.People = 2, Review.Scores.Rating = 87, Latitude = 40.000000, Longitude = -3.00000, Square.Meters = 66.08)
+new_apartment <- data.frame(Accommodates = 6, Bathrooms = 2.0, Bedrooms = 4, Beds = 6,Price = 100, Guests.Included = 2, Extra.People = 0, Review.Scores.Rating = 87, Latitude = 40.47720, Longitude = -3.767775, Square.Meters = 99.08)
+
 
 ```
 
 Aplico un modelo de PCA
+
 ```{r}
 # Aplico un  modelo PCA 
 pr_madrid <- prcomp(pca_matrix,center = TRUE, scale. = TRUE)
@@ -365,7 +353,9 @@ pr_madrid$sdev
 pr_madrid$rotation
 
 ```
+
 Aplico la predicción con el modelo al apartamento nuevo.
+
 ```{r}
 # Aplico el predict con el modelo anterior a mi nuevo apartamento
 apartment_transform <- predict(pr_madrid, as.matrix(new_apartment))
@@ -389,15 +379,15 @@ apart_pca <- apartment_transform[, 1:number_of_pca_components]
 Amad <- pr_madrid$x[,1:number_of_pca_components]
 
 # Calculo la distancia euclídea
-dist <- rowSums((Amad - apart_pca)^2)   
-# Selecciono los 5 apartamentos que cumplen con la distancia       
-knn_tags <- order(dist,decreasing = F)[1:knn]
+dist <- rowSums((apart_pca - Amad)^2)   
+# Selecciono los 5 apartamentos que cumplen con la distancia  
+knn_tags <- order(dist)[1:knn]     
 knn_tags
 
 ```
 
 ```{r}
 # Selecciono las filas del data frame que tienen esos apartamentos.
-neigbourhood_near <- df_filter_madrid[knn_tags,] 
+neigbourhood_near <- df_madrid_pca[knn_tags,] 
 neigbourhood_near
 ```

@@ -113,7 +113,7 @@ naApartment &lt;- sum(is.na(df_madrid$Square.Meters)) # Apartamentos que tienen 
 porcentageNaApartament &lt;- (naApartment/totalApartment)*100
 paste('El porcentaje de apartamentos que no muestran los metros cuadrados es', round(porcentageNaApartament,2),'%') # Redondeo a 2 decimales</code></pre></li>
 </ol>
-<pre class="{r}"><code>    # Lo mismo con BINOM.TEST
+<pre class="{r}"><code>    # Podemos aplicar un test binomial donde en probatility of sucess podemos ver el mismo porcentaje.
     binom.test(naApartment,totalApartment)</code></pre>
 <hr>
 <ol start="4" type="1">
@@ -126,12 +126,12 @@ porcentageCeroApartament &lt;- (ceroApartment/totalApartmentNo0)*100
 paste('El porcentaje de apartamentos con 0 metros cuadrados es', round(porcentageCeroApartament,2),'%') # Redondeo a dos decimales
 </code></pre></li>
 </ol>
-<pre class="{r}"><code>#Con BINOM.TEST
+<pre class="{r}"><code>#Comprobamos con un test binomial igual que en le punto anterior
 binom.test(ceroApartment,totalApartmentNo0)</code></pre>
 <hr>
 <ol start="5" type="1">
 <li><p>Reemplazar todos los 0m^2 por NA</p>
-<pre class="{r}"><code># Reemplazar los apartamentos con 2 m2 por NA
+<pre class="{r}"><code># Reemplazar los apartamentos con 0 m2 por NA
 df_madrid$Square.Meters[which(df_madrid$Square.Meters == 0)] &lt;- NA
 
 df_madrid</code></pre></li>
@@ -173,20 +173,19 @@ df_filter_madrid
 shapiro.test(df_filter_madrid$Square.Meters)</code></pre></li>
 </ol>
 <p>Con un p-valor menor a 0.05 descartamos la hipótesis de que sigue una distribución normal. Aplicamos el test Kruskal.</p>
-<pre class="{r}"><code>
-# La hipótesis nula afirma que todos los Barrios tienen la misma media de metros cuadrados.
+<pre class="{r}"><code># La hipótesis nula afirma que todos los Barrios tienen la misma media de metros cuadrados.
 kruskalTest_madrid &lt;- kruskal.test(Square.Meters ~ Neighbourhood, data = df_filter_madrid)
 kruskalTest_madrid</code></pre>
 <p>El p-valor es menor de 0.05, por lo que no podemos asumir que todos los Barrios tienen la misma media de metros cuadrados y los consideramos diferentes.</p>
 <hr>
 <ol start="10" type="1">
 <li><p>Vamos a agrupar los barrios por metros cuadrados. Podemos usar una matriz de similaridad de Tukey. Muestra como de similares o diferentes son los barrios si nos fijámos únicamente en los metros cuadrados de los pisos. ¿Como se diferencia la media del Barrio A al Barrio B? (Es decir, cual sería el pvalor suponiendo una H0 en la que las medias son iguales).</p>
-<p>```{r fig.height=10, fig.width=13} tkyMadrid &lt;- TukeyHSD(aov(Square.Meters ~ Neighbourhood, data = df_filter_madrid)) tkyMadrid</p>
+<p>```{r fig.height=10, fig.width=17} tkyMadrid &lt;- TukeyHSD(aov(Square.Meters ~ Neighbourhood, data = df_filter_madrid)) tkyMadrid</p>
 <p>tkyMadrid.result &lt;- data.frame(tkyMadrid<span class="math inline">\(Neighbourhood)
 cn &lt;- sort(unique(df_filter_madrid\)</span>Neighbourhood)) resm &lt;- matrix(NA, length(cn),length(cn)) rownames(resm) &lt;- cn colnames(resm) &lt;- cn resm[lower.tri(resm) ] &lt;- round(tkyMadrid.result$p.adj,4) resm[upper.tri(resm) ] &lt;- t(resm)[upper.tri(resm)] diag(resm) &lt;- 1 library(ggplot2) library(reshape2) dfResm &lt;- melt(resm) ggplot(dfResm, aes(x = Var1, y = Var2, fill = value)) + geom_tile(colour = “black”) + geom_text(aes(label = paste(round(value*100,0),“%”)),size = 3) + scale_fill_gradient(low = “white”,high = “darkorange”) + ylab(“Class”) + xlab(“Class”) + theme_bw() + theme(axis.text.x = element_text(angle = 90, hjust = 1),legend.position = “none”)</p>
 <p>```</p></li>
 </ol>
-<p>La hipótesis nula es que no hay diferencia significativa entre las medias de todos los pares de barrios que tienen un p adj alto, con lo que podemos ver que algunos barrios como Jerónimos y Acacias si tienen diferencias pero otros muchos no las tienen.</p>
+<p>La hipótesis nula es que no hay diferencia significativa entre las medias de todos los pares de barrios que tienen un p adj alto, pero los barrios de Jerónimos y Rios rosas si tienen diferencias con el resto.</p>
 <hr>
 <ol start="11" type="1">
 <li><p>En el punto anterior has creado una matriz de p-valores que indica como de parecidos son dos barrios. Si su pvalor es alto significa que los barrios son parecidos, si es bajo significa que los barrios son diferentes Esta matriz la podemos usar como matriz de distancia si restamos el pvalor a 1. Es decir si usamos como distancia 1-pvalor. De esta forma barrios con un pvalor alto tendrán una distancia mayor que aquellos con un pvalor bajo. Usando esta última métrica como matriz de distancias dibuja un dendrograma de los diferentes barrios.</p>
@@ -201,40 +200,44 @@ abline(v = 0.1,col = "red")
 </ol>
 <hr>
 <ol start="12" type="1">
-<li><p>¿Que punto de corte sería el aconsejable?, ¿cuantos clusters aparecen? Segun la imagen ponemos el corte en 0.1 para conseguir 3 clúster.</p>
+<li><p>¿Que punto de corte sería el aconsejable?, ¿cuantos clusters aparecen?</p>
+<p>Segun la imagen ponemos el corte en 0.1 para conseguir 3 clúster.</p>
 <p>```{r fig.height=10, fig.width=8} library(cluster) clusters &lt;- cutree_1h.dendrogram(madrid.dend,h = 0.1) ss &lt;- silhouette(clusters, distance) plot(ss,col = 1:max(clusters),border = NA)</p>
 <p>```</p></li>
 </ol>
-<p>Tenemos un clúster muy definido que es el 3.</p>
+<p>Tenemos un clúster muy definido que es el 3 con los barrios Jerónimos y Rio Rosas.</p>
 <hr>
 <ol start="13" type="1">
 <li><p>Vamos a crear una nueva columna en el dataframe df_madrid con un nuevo identificador marcado por los clusters obtenidos. Esta columna la llamaremos neighb_id.</p>
-<pre class="{r}"><code>df_cluster &lt;- data.frame(clusters) # Convierte clusters a data frame
-df_madrid_cluster &lt;- merge(df_filter_madrid, df_cluster) # Lo uno con el df_filter_madrid
-df_madrid_cluster &lt;- df_madrid_cluster |&gt; rename(neighb_id = clusters) # Renombro la columna clusters a neighb_id
-df_madrid_cluster$neighb_id &lt;- as.factor(df_madrid_cluster$neighb_id) # La paso a factor
-summary(df_madrid_cluster)</code></pre></li>
+<pre class="{r}"><code>df_filter_madrid$neighb_id &lt;- clusters[df_filter_madrid$Neighbourhood]
+
+df_filter_madrid$neighb_id &lt;- as.factor(df_filter_madrid$neighb_id) # La paso a factor
+df_filter_madrid</code></pre></li>
 </ol>
 <hr>
 <ol start="14" type="1">
 <li><p>Vamos a crear dos grupos, uno test y otro train.</p>
 <pre class="{r}"><code>set.seed(12345)
-df_madrid_cluster &lt;- df_madrid_cluster |&gt; na.omit(df_madrid_cluster$Review.Scores.Rating)
-idx &lt;- sample(1:nrow(df_madrid_cluster),nrow(df_madrid_cluster)*0.7)
-df_madrid.train &lt;- df_madrid_cluster[idx,] # DATA FRAME DE TRAINING
-df_madrid.test &lt;- df_madrid_cluster[-idx,] # DATA FRAME DE TESTING
+# Selecciono los idx de forma aleatoaria, pongo una semilla para evitar cada vez tener unos resultados.
+idx &lt;- sample(1:nrow(df_filter_madrid),nrow(df_filter_madrid)*0.7)
+
+# Selecciono los data frames con esos indices
+df_madrid.train &lt;- df_filter_madrid[idx,] # DATA FRAME DE TRAINING
+df_madrid.test &lt;- df_filter_madrid[-idx,] # DATA FRAME DE TESTING
+
+df_filter_madrid
 df_madrid.test
-df_madrid.train
-df_madrid_cluster</code></pre></li>
+df_madrid.train</code></pre></li>
 </ol>
 <hr>
 <ol start="15" type="1">
 <li><p>Tratamos de predecir los metros cuadrados en función del resto de columnas del dataframe.</p>
-<pre class="{r}"><code># USAMOS UNA REGRESION LINEAL
+<pre class="{r}"><code># USO UNA REGRESION LINEAL  PARA MI MODELO
 modelMadrid &lt;- lm(Square.Meters~Accommodates+Bathrooms+Bedrooms+Beds+Price+Review.Scores.Rating+neighb_id,df_madrid.train)
 summary(modelMadrid)
 confint(modelMadrid)
 
+# Añado a mis data frames de training y testing una columna con la predicción del modelo
 df_madrid.train$sqm_est &lt;- predict(modelMadrid, df_madrid.train)
 df_madrid.test$sqm_est &lt;- predict(modelMadrid, df_madrid.test)
 </code></pre></li>
@@ -255,12 +258,13 @@ ggplot(df_madrid.train, aes(x = Square.Meters, y = Square.Meters - sqm_est)) + g
 # Comprobamos en un gráfico si lso residuos siguen una distribución normal
 qqnorm(df_madrid.train$Square.Meters - df_madrid.train$sqm_est)
 qqline(df_madrid.train$Square.Meters - df_madrid.train$sqm_est, col = 'orange', lwd = 2)
-</code></pre></li>
+</code></pre>
+<p>Debido a los NA nos da Na en RSME y MEA, si los quitamos nos quedamos con muy pocos datos, asi que usaremos el R2 y las gráficas para evaluar el modelo y poder usar más muestras.</p></li>
 </ol>
 <p>Tenemos algunos puntos que no ajusta del todo bien, sobretodo en apartamentos con pocos metros cuadrados o muchos metros cuadrados. Por lo analizado previamente puede ser por tener pocas muestras en esos casos pero en la zona media ajusta bastante bien.</p>
 <ol start="17" type="1">
 <li><p>Si tuvieramos un anuncio de un apartamento para 6 personas (Accommodates), con 1 baño, con un precio de 80€/noche y 3 habitaciones en el barrio de Sol, con 3 camas y un review de 80. ¿Cuantos metros cuadrados tendría? Si tu modelo necesita algúna variable adicional puedes inventartela dentro del rango de valores del dataset. ¿Como varía sus metros cuadrados con cada habitación adicional?</p>
-<pre class="{r}"><code># Definir data frame con los valores
+<pre class="{r}"><code># Definir data frame con los valores y que está en uno de los barrios categorizados como 2
 data = data.frame(Accommodates = 6,
                   Bathrooms = 1,
                   Bedrooms = 3,
@@ -279,53 +283,45 @@ paste('El aparatamento tiene: ', round(estimacion_sqm,2), ' m2')
 <ol start="18" type="1">
 <li><p>Rellenar los Square.Meters con valor NA con el estimado con el modelo anterior.</p>
 <pre class="{r}"><code># Encontrar las filas con valores faltantes en Square.Meters
-miss_index &lt;- which(is.na(df_madrid_cluster$Square.Meters))
+miss_index &lt;- is.na(df_filter_madrid$Square.Meters)
 
-# Crear un dataframe temporal con las variables predictoras para las filas con valores faltantes
-data_new &lt;- data.frame(
-  Accommodates = df_madrid_cluster$Accommodates[miss_index],
-  Bathrooms = df_madrid_cluster$Bathrooms[miss_index],
-  Bedrooms = df_madrid_cluster$Bedrooms[miss_index],
-  Price = df_madrid_cluster$Price[miss_index],
-  Beds = df_madrid_cluster$Beds[miss_index],
-  Review.Scores.Rating = df_madrid_cluster$Review.Scores.Rating[miss_index],
-  neighb_id = df_madrid_cluster$neighb_id[miss_index]
-)
-
-# Predice los valores faltantes utilizando el modelo
-predict_values &lt;- predict(modelMadrid, data_new)
-
+predicted_value &lt;- predict(modelMadrid, newdata = df_filter_madrid[miss_index, c('Accommodates', 'Bathrooms', 'Bedrooms', 'Price', 'Beds', 'Review.Scores.Rating', 'neighb_id')])
 # Asigna los valores predichos a las filas con valores faltantes en Square.Meters
-df_madrid_cluster$Square.Meters[miss_index] &lt;- predict_values
+df_filter_madrid$Square.Meters[miss_index] &lt;- predicted_value
 
-df_madrid_cluster
-</code></pre></li>
+df_filter_madrid
+# NO RELLENA TODOS PORQUE HAY COLUMNAS CON NA EN ALGUNO DE LOS VALORES NECESARIOS PARA LA PREDICCIÓN.</code></pre></li>
 </ol>
 <hr>
 <ol start="19" type="1">
 <li>Usar PCA para encontrar el apartamento más cercano a uno dado. Este algoritmo nos ayudaría a dado un apartamento que el algoritmo nos devolvería los 5 apartamentos más similares.</li>
 </ol>
 <p>Crearemos una función tal que le pasemos un apartamento con los siguientes datos: * Accommodates * Bathrooms * Bedrooms * Beds * Price * Guests.Included * Extra.People * Review.Scores.Rating * Latitude * Longitude * Square.Meters y nos devuelva los 5 más similares de:</p>
-<pre class="{r}"><code># Seleccion las columnas númericas del data frame
-df_madrid_pca &lt;- df_madrid_cluster |&gt; select(-c('Neighbourhood','Square.Feet','neighb_id'))
+<p>Preparación de los datos</p>
+<pre class="{r}"><code># Seleccion las columnas númericas del data frame y elimino los na
+df_madrid_pca &lt;- df_filter_madrid |&gt; select(-c('Neighbourhood','Square.Feet','neighb_id')) |&gt; filter(!is.na(Review.Scores.Rating)) |&gt; filter(!is.na(Bathrooms)) |&gt; filter(!is.na(Bedrooms)) |&gt; filter(!is.na(Beds)) |&gt; filter(!is.na(Price))
 # Convierto el data frame en matriz
 pca_matrix &lt;- as.matrix(df_madrid_pca)
 # Creo un data frame con el apartamento que quiero buscar los más similares
-new_apartment &lt;- data.frame(Accommodates = 2, Bathrooms = 1.0, Bedrooms = 2, Beds = 4,Price = 90, Guests.Included = 2, Extra.People = 2, Review.Scores.Rating = 87, Latitude = 40.000000, Longitude = -3.00000, Square.Meters = 66.08)
+new_apartment &lt;- data.frame(Accommodates = 6, Bathrooms = 2.0, Bedrooms = 4, Beds = 6,Price = 100, Guests.Included = 2, Extra.People = 0, Review.Scores.Rating = 87, Latitude = 40.47720, Longitude = -3.767775, Square.Meters = 99.08)
+
 </code></pre>
+<p>Aplico un modelo de PCA</p>
 <pre class="{r}"><code># Aplico un  modelo PCA 
 pr_madrid &lt;- prcomp(pca_matrix,center = TRUE, scale. = TRUE)
 str(pr_madrid)
 pr_madrid$sdev
 pr_madrid$rotation
 </code></pre>
+<p>Aplico la predicción con el modelo al apartamento nuevo.</p>
 <pre class="{r}"><code># Aplico el predict con el modelo anterior a mi nuevo apartamento
 apartment_transform &lt;- predict(pr_madrid, as.matrix(new_apartment))
 apartment_transform
+
 # Compruebo en el gráfico los autovalores para ver con cuantos PCA me quedo
 plot(cumsum(pr_madrid$sdev^2/sum(pr_madrid$sdev^2)),main = "Autovalores")
 grid()</code></pre>
-<p>Cogeremos los componentes que acumulan entre un 80-90% de la varianza. PCA = 6</p>
+<p>Cogeremos los componentes que acumulan entre un 80-90% de la varianza. PCA = 5 o 6</p>
 <pre class="{r}"><code># Asigno el numero componentes PCA
 number_of_pca_components &lt;- 6
 # Asigno el número de vecinos que quiero encontrar
@@ -336,13 +332,13 @@ apart_pca &lt;- apartment_transform[, 1:number_of_pca_components]
 Amad &lt;- pr_madrid$x[,1:number_of_pca_components]
 
 # Calculo la distancia euclídea
-dist &lt;- rowSums((Amad - apart_pca)^2)   
-# Selecciono los 5 apartamentos que cumplen con la distancia       
-knn_tags &lt;- order(dist,decreasing = F)[1:knn]
+dist &lt;- rowSums((apart_pca - Amad)^2)   
+# Selecciono los 5 apartamentos que cumplen con la distancia  
+knn_tags &lt;- order(dist)[1:knn]     
 knn_tags
 </code></pre>
 <pre class="{r}"><code># Selecciono las filas del data frame que tienen esos apartamentos.
-neigbourhood_near &lt;- df_madrid_cluster[knn_tags,] 
+neigbourhood_near &lt;- df_madrid_pca[knn_tags,] 
 neigbourhood_near</code></pre>
 
 </main>
