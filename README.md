@@ -2,6 +2,7 @@
 # PROYECTO SOBRE APARTAMENTOS ARBNB EN MADRID
 Archivo: practica-LuciaDominguez.qmd (cuaderno Quarto, en RStudio con lenguaje R)
 formato HTML: practica-LuciaDominguez.html
+Practica en Python: PracticaLuciaPython.ipynb (realizado en Visual Studio Code en un notebook de jupyter en Python)
 
 Análisis de un data frame de Airbnb de los pisos de Madrid.
 Exploración de los datos
